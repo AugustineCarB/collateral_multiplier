@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Treasury Collateral Multiplier Proxy</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 48px;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1100px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #e6edf3;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      font-size: 0.82rem;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+
+    #chart {
+      width: 100%;
+      max-width: 1100px;
+      height: 520px;
+      margin-top: 20px;
+    }
+
+    .footnote {
+      width: 100%;
+      max-width: 1100px;
+      font-size: 0.73rem;
+      color: #6e7681;
+      line-height: 1.6;
+      margin-top: 18px;
+      border-top: 1px solid #21262d;
+      padding-top: 14px;
+    }
+
+    .footnote b { color: #8b949e; }
+
+    #status {
+      font-size: 0.8rem;
+      color: #8b949e;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>US Treasury Collateral Multiplier Proxy</h1>
+    <p class="subtitle">
+      Repo-velocity proxy &nbsp;·&nbsp;
+      velocity<sub>t</sub> = Treasury repo volume / (debt held by public − Fed SOMA holdings)
+    </p>
+  </header>
+
+  <div id="chart"></div>
+  <div id="status">Loading data…</div>
+
+  <div class="footnote">
+    <b>Methodology:</b>
+    Singh (IMF) defines the collateral multiplier as pledged-collateral / primary-source collateral.
+    This proxy uses daily US Treasury repo volumes (SOFR, TGCR, BGCR from the NY Fed) as the
+    numerator and Treasury free-float (debt held by public minus Fed SOMA holdings) as the denominator.
+    Higher velocity implies more re-pledging per dollar of available collateral.
+    <br><br>
+    <b>Caveats:</b>
+    Captures Treasury repo only — misses MBS repo, securities lending, and prime-brokerage
+    rehypothecation. The denominator uses total public float rather than primary-dealer inventories,
+    so the absolute level is not directly comparable to Singh's quarterly figures.
+    This is a direction-of-travel indicator.
+    <br><br>
+    <b>Sources:</b>
+    NY Fed Reference Rates API (SOFR/TGCR/BGCR volumes) ·
+    Treasury Fiscal Data API (debt held by public) ·
+    FRED TREAST (Fed SOMA Treasury holdings) ·
+    Updated daily via GitHub Actions.
+  </div>
+
+  <script>
+    const CSV_URL =
+      "https://raw.githubusercontent.com/AugustineCarB/collateral_multiplier/main/data/collateral_multiplier_proxy.csv";
+
+    function parseCSV(text) {
+      const lines = text.trim().split("\n");
+      const headers = lines[0].split(",");
+      return lines.slice(1).map(line => {
+        const vals = line.split(",");
+        const row = {};
+        headers.forEach((h, i) => { row[h.trim()] = vals[i] ? vals[i].trim() : ""; });
+        return row;
+      });
+    }
+
+    async function main() {
+      const resp = await fetch(CSV_URL);
+      if (!resp.ok) throw new Error("Failed to fetch CSV: " + resp.status);
+      const text = await resp.text();
+      const rows = parseCSV(text);
+
+      // Filter rows that have a proxy value
+      const valid = rows.filter(r => r.collateral_multiplier_proxy !== "");
+
+      const dates   = valid.map(r => r.date);
+      const daily   = valid.map(r => parseFloat(r.collateral_multiplier_proxy) || null);
+      const m30     = valid.map(r => r.collateral_multiplier_proxy_30d !== "" ? parseFloat(r.collateral_multiplier_proxy_30d) : null);
+      const m90     = valid.map(r => r.collateral_multiplier_proxy_90d !== "" ? parseFloat(r.collateral_multiplier_proxy_90d) : null);
+      const sofrVol = valid.map(r => r.sofr_volume_bn !== "" ? parseFloat(r.sofr_volume_bn) : null);
+
+      const latest = valid[valid.length - 1];
+      document.getElementById("status").textContent =
+        `Latest data: ${latest.date}  ·  proxy = ${parseFloat(latest.collateral_multiplier_proxy).toFixed(4)}  ·  30d avg = ${parseFloat(latest.collateral_multiplier_proxy_30d).toFixed(4)}`;
+
+      const chart = echarts.init(document.getElementById("chart"), null, { renderer: "canvas" });
+
+      const option = {
+        backgroundColor: "#0d1117",
+        animation: false,
+        grid: [
+          { left: 64, right: 32, top: 48, bottom: 160 },
+          { left: 64, right: 32, top: "72%", bottom: 56 },
+        ],
+        legend: {
+          top: 10,
+          right: 32,
+          textStyle: { color: "#8b949e", fontSize: 12 },
+          itemWidth: 20,
+          itemHeight: 2,
+        },
+        tooltip: {
+          trigger: "axis",
+          axisPointer: { type: "cross", lineStyle: { color: "#444d56" } },
+          backgroundColor: "#161b22",
+          borderColor: "#30363d",
+          borderWidth: 1,
+          textStyle: { color: "#c9d1d9", fontSize: 12 },
+          formatter(params) {
+            const d = params[0].axisValue;
+            let s = `<b style="color:#e6edf3">${d}</b><br/>`;
+            params.forEach(p => {
+              if (p.value == null) return;
+              const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:5px"></span>`;
+              const val = p.seriesName.includes("Volume")
+                ? `$${p.value.toFixed(0)}B`
+                : p.value.toFixed(5);
+              s += `${dot}${p.seriesName}: <b>${val}</b><br/>`;
+            });
+            return s;
+          },
+        },
+        axisPointer: { link: [{ xAxisIndex: "all" }] },
+        dataZoom: [
+          {
+            type: "slider",
+            xAxisIndex: [0, 1],
+            bottom: 8,
+            height: 28,
+            borderColor: "#21262d",
+            fillerColor: "rgba(56,139,253,0.1)",
+            handleStyle: { color: "#388bfd" },
+            textStyle: { color: "#8b949e" },
+            start: 0, end: 100,
+          },
+          { type: "inside", xAxisIndex: [0, 1] },
+        ],
+        xAxis: [
+          {
+            type: "category", data: dates, gridIndex: 0,
+            axisLine: { lineStyle: { color: "#21262d" } },
+            axisLabel: { color: "#6e7681", fontSize: 11 },
+            splitLine: { lineStyle: { color: "#161b22" } },
+            axisTick: { show: false },
+          },
+          {
+            type: "category", data: dates, gridIndex: 1,
+            axisLine: { lineStyle: { color: "#21262d" } },
+            axisLabel: { color: "#6e7681", fontSize: 10 },
+            splitLine: { show: false },
+            axisTick: { show: false },
+          },
+        ],
+        yAxis: [
+          {
+            type: "value", gridIndex: 0, name: "Velocity (proxy)", nameTextStyle: { color: "#6e7681", fontSize: 10 },
+            axisLine: { show: false },
+            axisLabel: { color: "#6e7681", fontSize: 11, formatter: v => v.toFixed(3) },
+            splitLine: { lineStyle: { color: "#21262d" } },
+          },
+          {
+            type: "value", gridIndex: 1, name: "SOFR vol ($B)", nameTextStyle: { color: "#6e7681", fontSize: 10 },
+            axisLine: { show: false },
+            axisLabel: { color: "#6e7681", fontSize: 10, formatter: v => `$${v}B` },
+            splitLine: { lineStyle: { color: "#161b22" } },
+          },
+        ],
+        series: [
+          {
+            name: "Daily proxy",
+            type: "line",
+            xAxisIndex: 0, yAxisIndex: 0,
+            data: daily,
+            symbol: "none",
+            lineStyle: { color: "#388bfd", width: 1, opacity: 0.4 },
+            itemStyle: { color: "#388bfd" },
+            z: 1,
+          },
+          {
+            name: "30-day avg",
+            type: "line",
+            xAxisIndex: 0, yAxisIndex: 0,
+            data: m30,
+            symbol: "none",
+            lineStyle: { color: "#3fb950", width: 2 },
+            itemStyle: { color: "#3fb950" },
+            z: 2,
+          },
+          {
+            name: "90-day avg",
+            type: "line",
+            xAxisIndex: 0, yAxisIndex: 0,
+            data: m90,
+            symbol: "none",
+            lineStyle: { color: "#f78166", width: 2.5 },
+            itemStyle: { color: "#f78166" },
+            z: 3,
+          },
+          {
+            name: "SOFR Volume",
+            type: "bar",
+            xAxisIndex: 1, yAxisIndex: 1,
+            data: sofrVol,
+            itemStyle: { color: "#388bfd", opacity: 0.5 },
+            barWidth: "80%",
+          },
+        ],
+      };
+
+      chart.setOption(option);
+      window.addEventListener("resize", () => chart.resize());
+    }
+
+    main().catch(err => {
+      document.getElementById("status").textContent = "Error: " + err.message;
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
