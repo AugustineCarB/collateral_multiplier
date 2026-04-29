@@ -132,11 +132,12 @@ def fetch_debt_to_penny() -> pd.DataFrame:
 
     df = pd.concat(frames, ignore_index=True)
     df["record_date"] = pd.to_datetime(df["record_date"])
-    # amounts are reported in dollars; convert to $ billions
-    df["debt_held_public_bn"] = pd.to_numeric(df["debt_held_public_amt"]) / 1e9
-    df["total_public_debt_bn"] = pd.to_numeric(df["tot_pub_debt_out_amt"]) / 1e9
+    # amounts are reported in dollars; convert to $ billions ("null" strings → NaN, then drop)
+    df["debt_held_public_bn"] = pd.to_numeric(df["debt_held_public_amt"], errors="coerce") / 1e9
+    df["total_public_debt_bn"] = pd.to_numeric(df["tot_pub_debt_out_amt"], errors="coerce") / 1e9
     df = df.set_index("record_date").sort_index()
-    return df[["debt_held_public_bn", "total_public_debt_bn"]]
+    df = df[["debt_held_public_bn", "total_public_debt_bn"]].dropna(subset=["debt_held_public_bn"])
+    return df
 
 
 # ---------------------------------------------------------------------------
