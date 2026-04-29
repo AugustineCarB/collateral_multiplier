@@ -73,13 +73,19 @@ def _get(url: str, params: dict | None = None, accept: str = "application/json")
 # ---------------------------------------------------------------------------
 # 1. NY Fed reference rates: SOFR, TGCR, BGCR daily volumes
 # ---------------------------------------------------------------------------
-NYFED_RATE_URL = "https://markets.newyorkfed.org/api/rates/secured/{name}/last/{n}.json"
+# NB: the /last/{N} endpoint rejects very large N (returns 400). The /search
+# endpoint accepts an unbounded date range, so we use that and pull the full
+# history from before SOFR's first publication date (2018-04-03).
+NYFED_RATE_URL = "https://markets.newyorkfed.org/api/rates/secured/{name}/search.json"
+NYFED_HISTORY_START = "2014-08-22"  # earliest TGCR/BGCR publication date
 
 
-def fetch_ref_rate(name: str, n_days: int = 5000) -> pd.DataFrame:
+def fetch_ref_rate(name: str, start_date: str = NYFED_HISTORY_START) -> pd.DataFrame:
     """Fetch a NY Fed secured reference rate series with daily volume."""
-    url = NYFED_RATE_URL.format(name=name, n=n_days)
-    payload = _get(url).json()
+    url = NYFED_RATE_URL.format(name=name)
+    end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    params = {"startDate": start_date, "endDate": end_date}
+    payload = _get(url, params=params).json()
     rows = payload.get("refRates", [])
     if not rows:
         raise RuntimeError(f"No data returned for {name}")
