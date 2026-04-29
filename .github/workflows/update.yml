@@ -1,0 +1,41 @@
+name: Update collateral multiplier proxy
+
+on:
+  schedule:
+    # Every weekday at 14:00 UTC (~10:00 AM ET) — after NY Fed posts T-1 reference rates (~8:00 ET).
+    - cron: "0 14 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build proxy
+        run: python collateral_multiplier_proxy.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "data: update collateral multiplier proxy ($(date -u +%Y-%m-%d))"
+            git push
+          fi
