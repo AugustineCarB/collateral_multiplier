@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at_utc": "2026-06-26T15:01:09+00:00",
+    "generated_at_utc": "2026-06-29T15:17:32+00:00",
     "description": "US Treasury repo-velocity proxy for the Singh collateral multiplier. velocity = SFT_volume / (debt held by public - Fed SOMA Treasury holdings).",
     "columns": {
       "sofr_volume_bn": "SOFR daily volume, $ billions (NY Fed)",
@@ -16,28 +16,9 @@
       "collateral_multiplier_proxy_30d": "30-day rolling mean of proxy",
       "collateral_multiplier_proxy_90d": "90-day rolling mean of proxy"
     },
-    "latest_date": "2026-06-25"
+    "latest_date": "2026-06-26"
   },
   "series": [
-    {
-      "date": "2025-01-31",
-      "sofr_rate_pct": 4.38,
-      "sofr_volume_bn": 2533.0,
-      "tgcr_rate_pct": 4.34,
-      "tgcr_volume_bn": 892.0,
-      "bgcr_rate_pct": 4.34,
-      "bgcr_volume_bn": 918.0,
-      "debt_held_public_bn": 28911.508659,
-      "total_public_debt_bn": 36220.206738,
-      "soma_treasuries_bn": 4274.511,
-      "free_float_treasuries_bn": 24636.997659,
-      "velocity_sofr": 0.102813,
-      "velocity_tgcr": 0.036206,
-      "velocity_bgcr": 0.037261,
-      "collateral_multiplier_proxy": 0.05876,
-      "collateral_multiplier_proxy_30d": 0.054585,
-      "collateral_multiplier_proxy_90d": 0.053563
-    },
     {
       "date": "2025-02-03",
       "sofr_rate_pct": 4.35,
@@ -6943,16 +6924,35 @@
       "tgcr_volume_bn": 1259.0,
       "bgcr_rate_pct": 3.62,
       "bgcr_volume_bn": 1285.0,
-      "debt_held_public_bn": 31606.937182,
-      "total_public_debt_bn": 39320.508743,
+      "debt_held_public_bn": 31594.497291,
+      "total_public_debt_bn": 39311.02273,
       "soma_treasuries_bn": 4488.106,
-      "free_float_treasuries_bn": 27118.831182,
-      "velocity_sofr": 0.115971,
-      "velocity_tgcr": 0.046425,
-      "velocity_bgcr": 0.047384,
-      "collateral_multiplier_proxy": 0.069927,
-      "collateral_multiplier_proxy_30d": 0.069886,
-      "collateral_multiplier_proxy_90d": 0.07049
+      "free_float_treasuries_bn": 27106.391291,
+      "velocity_sofr": 0.116024,
+      "velocity_tgcr": 0.046447,
+      "velocity_bgcr": 0.047406,
+      "collateral_multiplier_proxy": 0.069959,
+      "collateral_multiplier_proxy_30d": 0.069887,
+      "collateral_multiplier_proxy_90d": 0.070491
+    },
+    {
+      "date": "2026-06-26",
+      "sofr_rate_pct": 3.62,
+      "sofr_volume_bn": 3171.0,
+      "tgcr_rate_pct": 3.6,
+      "tgcr_volume_bn": 1256.0,
+      "bgcr_rate_pct": 3.6,
+      "bgcr_volume_bn": 1285.0,
+      "debt_held_public_bn": 31594.497291,
+      "total_public_debt_bn": 39311.02273,
+      "soma_treasuries_bn": 4488.106,
+      "free_float_treasuries_bn": 27106.391291,
+      "velocity_sofr": 0.116983,
+      "velocity_tgcr": 0.046336,
+      "velocity_bgcr": 0.047406,
+      "collateral_multiplier_proxy": 0.070242,
+      "collateral_multiplier_proxy_30d": 0.069859,
+      "collateral_multiplier_proxy_90d": 0.070453
     }
   ]
 }
