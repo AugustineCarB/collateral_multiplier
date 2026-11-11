@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at_utc": "2026-11-10T20:44:29+00:00",
+    "generated_at_utc": "2026-11-11T21:10:06+00:00",
     "description": "US Treasury repo-velocity proxy for the Singh collateral multiplier. velocity = SFT_volume / (debt held by public - Fed SOMA Treasury holdings).",
     "columns": {
       "sofr_volume_bn": "SOFR daily volume, $ billions (NY Fed)",
@@ -6943,14 +6943,14 @@
       "tgcr_volume_bn": 1226.0,
       "bgcr_rate_pct": 3.86,
       "bgcr_volume_bn": 1254.0,
-      "debt_held_public_bn": 32762.925357,
-      "total_public_debt_bn": 40552.751019,
+      "debt_held_public_bn": 32763.773414,
+      "total_public_debt_bn": 40559.796589,
       "soma_treasuries_bn": 4578.777,
-      "free_float_treasuries_bn": 28184.148357,
-      "velocity_sofr": 0.109991,
-      "velocity_tgcr": 0.0435,
-      "velocity_bgcr": 0.044493,
-      "collateral_multiplier_proxy": 0.065995,
+      "free_float_treasuries_bn": 28184.996414,
+      "velocity_sofr": 0.109988,
+      "velocity_tgcr": 0.043498,
+      "velocity_bgcr": 0.044492,
+      "collateral_multiplier_proxy": 0.065993,
       "collateral_multiplier_proxy_30d": 0.065314,
       "collateral_multiplier_proxy_90d": 0.065387
     }
